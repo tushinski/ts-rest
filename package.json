@@ -1,0 +1,28 @@
+{
+  "name": "ts-rest",
+  "version": "0.1.0",
+  "description": "Library for creating typed REST clients.",
+  "main": "./ts-rest.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tushinski/ts-rest"
+  },
+  "keywords": [
+    "rest",
+    "http",
+    "client",
+    "typescript",
+    "frontend"
+  ],
+  "author": "Alexey Tushinski",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "pack" : "node ./pack.js"
+  },
+  "devDependencies": {
+    "typescript": "^4.3.5"
+  },
+  "dependencies": {
+  }
+}
