@@ -3,7 +3,7 @@ Library for creating typed REST clients.
 
 Used for client side. Based on [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API). 
 
-`npm i ts-rest`
+`npm i @tushinski/ts-rest`
 
 ## Usage
 ```typescript
