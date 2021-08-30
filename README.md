@@ -14,10 +14,10 @@ Used for client side. Based on [Fetch API](https://developer.mozilla.org/en-US/d
     // your client object (or API descriptor)
     const api = {
         users: {
-            GET: getMapping<string, User>(), // mapping
+            GET: getMapping<undefined, User>(), // mapping
         },
         products: {
-            GET: getMapping<string, Product>(),
+            GET: getMapping<undefined, Product>(),
             POST: postMapping<Product, Product>()
         }   
     };
@@ -31,9 +31,9 @@ Used for client side. Based on [Fetch API](https://developer.mozilla.org/en-US/d
 ```
 
 ##### Client object (or API descriptor)
-A plain object representing tree structure of target API.
+A plain object representing a tree structure of target API.
 
-The object from example represents an API which provide methods:
+The object from the example represents an API that provide methods:
 - `[GET] /users/:id`
 - `[GET] /products/:id`
 - `[POST] /products/`
@@ -43,7 +43,7 @@ Ts-rest provides several functions to create mappings for each HTTP method.
 Key of a mapping property must be a name of corresponding HTTP method.
 
 ##### Initialization
-Function `initApi` initializes the client object for it can be used for requests.
+`initApi` function initializes the client object so that it can be used to make requests.
 
 ## Documentation
 #### GET (single resource)
