@@ -1,56 +1,66 @@
 import {walkObject} from "./utils/walk-object";
 
-type MethodName = 'GET' | '_GET' | 'POST' | 'PUT' | 'DELETE';
-type ResourceDescriptor = { [key: string]: ResourceDescriptor | ((data: any) => Promise<any>) };
-type URLParams = {[key: string]: string | number | boolean | null};
-type ApiOptions = {
-    commonRequestOptions?: ExtendedRequestOptions
+type HTTPMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
+type ClientMethod = (...data: any[]) => Promise<any>;
+type ResourceDescriptor = { [key: string]: ResourceDescriptor } & {
+    get?: ClientMethod,
+    getAll?: ClientMethod,
+    post?: ClientMethod,
+    put?: ClientMethod,
+    delete?: ClientMethod,
+    single?: (id: string) => object
 };
-type ExtendedRequestOptions = {
-    // method?: string,
+type URLParams = {[key: string]: string | number | boolean | null};
+type ClientOptions = {
+    url: string,
+    descriptor: ResourceDescriptor,
+    commonRequestOptions?: FetchOptions
+};
+type FetchOptions = {
     headers?: {[key: string]: string},
-    // body?: any,
     mode?: string,
     credentials?: string,
     cache?: string,
     redirect?: string,
-    referref?: string,
+    referrer?: string,
     referrerPolicy?: string,
     integrity?: string,
     keepalive?: boolean
 };
 type MappingOptions = {
-    method: MethodName,
-    apiOptions?: ApiOptions
-    url?: string,
+    method: HTTPMethod,
+    descriptorOptions?: ClientOptions
+    path?: string,
 };
+type RequestOptions = {mapping, body?, params?: URLParams, id?: string};
 
 
+const clientMethodToHttpMethod: {[key: string]: HTTPMethod} = {
+    get: 'GET',
+    getAll: 'GET',
+    post: 'POST',
+    put: 'PUT',
+    delete: 'DELETE'
+};
 const mappingToOptions = new Map<Function, MappingOptions>();
+const descriptorProviderToPath = new Map<Function, string>();
 
 
 function encodeUrlParams(params: URLParams) {
     let paramsEncoded = [];
     for (let name in params) {
-        if (!['number', 'string', 'boolean', 'null'].includes(typeof params[name])) {
-            throw new Error(`Illegal parameter type: parameter: '${params[name]}'; type: '${typeof params[name]}.`);
-        }
         paramsEncoded.push(`${name}=${params[name]}`);
     }
     return paramsEncoded.join('&');
 }
 
 
-function request(options: {mapping, body?, params?: URLParams, id?: string}) {
+function request(options: RequestOptions) {
     const mappingOptions = mappingToOptions.get(options.mapping);
     let requestOptions: any = {};
-    let requestUrl = mappingOptions.url;
+    let requestUrl = mappingOptions.descriptorOptions.url + mappingOptions.path;
 
-    if (mappingOptions.method[0] === '_') {
-        requestOptions.method = mappingOptions.method.substr(1);
-    } else {
-        requestOptions.method = mappingOptions.method;
-    }
+    requestOptions.method = mappingOptions.method;
     if (options.body !== undefined) {
         requestOptions.body = JSON.stringify(options.body);
     }
@@ -63,7 +73,7 @@ function request(options: {mapping, body?, params?: URLParams, id?: string}) {
 
     requestOptions = {
         ...requestOptions,
-        ...mappingOptions.apiOptions.commonRequestOptions
+        ...mappingOptions.descriptorOptions.commonRequestOptions
     };
 
     return fetch(requestUrl, requestOptions)
@@ -71,8 +81,23 @@ function request(options: {mapping, body?, params?: URLParams, id?: string}) {
 }
 
 
+function nested<NestedDescriptor extends ResourceDescriptor>(descriptorConstructor: () => NestedDescriptor) {
+    const descriptorProvider = function(id: string): NestedDescriptor {
+        const basePath = descriptorProviderToPath.get(descriptorProvider);
+        const descriptor = descriptorConstructor();
+        initClient({
+            descriptor,
+            url: `${basePath}/${id}`
+        });
+        return descriptor;
+    };
+    descriptorProviderToPath.set(descriptorProvider, '');
+    return descriptorProvider;
+}
+
+
 function getMapping<ParamsType extends URLParams, ResponseType>() {
-    const mapping = function(id: string, params?: ParamsType): Promise<ResponseType> {
+    const mapping = function(id?: string, params?: ParamsType): Promise<ResponseType> {
         return request({mapping, id, params})
     };
     mappingToOptions.set(mapping, {method: 'GET'});
@@ -84,7 +109,7 @@ function getAllMapping<ParamsType extends URLParams, ResponseType>() {
     const mapping = function(params?: ParamsType): Promise<ResponseType> {
         return request({mapping, params})
     };
-    mappingToOptions.set(mapping, {method: '_GET'});
+    mappingToOptions.set(mapping, {method: 'GET'});
     return mapping;
 }
 
@@ -116,26 +141,32 @@ function deleteMapping<ResponseType>() {
 }
 
 
-function initApi(descriptor: ResourceDescriptor, url: string, options?: ApiOptions) {
+function initClient(options: ClientOptions) {
     options = {...options};
 
-    walkObject(descriptor, ({ value, location, key, isLeaf }) => {
+    walkObject(options.descriptor, ({ value, location, key, isLeaf }) => {
         if (!isLeaf) return;
 
-        const mappingOptions = mappingToOptions.get(value);
         const resourcePath = '/' + location.slice(0, location.length - 1).join('/');
+
+        if (descriptorProviderToPath.has(value)) {
+            descriptorProviderToPath.set(value, resourcePath);
+            return;
+        }
+
+        const mappingOptions = mappingToOptions.get(value);
 
         if (!mappingOptions) {
             throw new Error(`Invalid mapping for: ${location.join('.')}`);
         }
-        if (mappingOptions.method !== key) {
-            throw new Error(`Property name '${key}' doesn't match mapping method: '${mappingOptions.method}'.`);
+        if (mappingOptions.method !== clientMethodToHttpMethod[key]) {
+            throw new Error(`Method name '${key}' doesn't match to '${mappingOptions.method}' mapping.`);
         }
 
-        mappingOptions.url = url + resourcePath;
-        mappingOptions.apiOptions = options;
+        mappingOptions.path = resourcePath;
+        mappingOptions.descriptorOptions = options;
     });
 }
 
 
-export { getMapping, getAllMapping, postMapping, putMapping, deleteMapping, initApi };
+export { getMapping, getAllMapping, postMapping, putMapping, deleteMapping, initClient };
