@@ -1,38 +1,7 @@
 import {walkObject} from "./utils/walk-object";
-import {encodeUrlParams, URLParams} from "./utils/encode-url-params";
-
-type HTTPMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
-type ClientMethod = (...data: any[]) => Promise<any>;
-type ResourceDescriptor = { [key: string]: ResourceDescriptor } & {
-    get?: ClientMethod,
-    getAll?: ClientMethod,
-    post?: ClientMethod,
-    put?: ClientMethod,
-    delete?: ClientMethod,
-    single?: (id: string) => object
-};
-type ClientOptions = {
-    url: string,
-    descriptor: ResourceDescriptor,
-    commonRequestOptions?: FetchOptions
-};
-type FetchOptions = {
-    headers?: {[key: string]: string},
-    mode?: string,
-    credentials?: string,
-    cache?: string,
-    redirect?: string,
-    referrer?: string,
-    referrerPolicy?: string,
-    integrity?: string,
-    keepalive?: boolean
-};
-type MappingOptions = {
-    method: HTTPMethod,
-    descriptorOptions?: ClientOptions
-    path?: string,
-};
-type RequestOptions = {mapping, body?, params?: URLParams, id?: string};
+import {URLParams} from "./utils/encode-url-params";
+import {HTTPMethod, request} from "./utils/request";
+import {ClientOptions, MappingOptions, ResourceDescriptor} from "./common-typings";
 
 
 const clientMethodToHttpMethod: {[key: string]: HTTPMethod} = {
@@ -44,32 +13,6 @@ const clientMethodToHttpMethod: {[key: string]: HTTPMethod} = {
 };
 const mappingToOptions = new Map<Function, MappingOptions>();
 const descriptorProviderToPath = new Map<Function, string>();
-
-
-function request(options: RequestOptions) {
-    const mappingOptions = mappingToOptions.get(options.mapping);
-    let requestOptions: any = {};
-    let requestUrl = mappingOptions.descriptorOptions.url + mappingOptions.path;
-
-    requestOptions.method = mappingOptions.method;
-    if (options.body !== undefined) {
-        requestOptions.body = JSON.stringify(options.body);
-    }
-    if (options.id) {
-        requestUrl += `/${options.id}`;
-    }
-    if (options.params) {
-        requestUrl += `?${encodeUrlParams(options.params)}`;
-    }
-
-    requestOptions = {
-        ...requestOptions,
-        ...mappingOptions.descriptorOptions.commonRequestOptions
-    };
-
-    return fetch(requestUrl, requestOptions)
-        .then(res => res.json())
-}
 
 
 function nested<NestedDescriptor extends ResourceDescriptor>(descriptorConstructor: () => NestedDescriptor) {
@@ -89,7 +32,7 @@ function nested<NestedDescriptor extends ResourceDescriptor>(descriptorConstruct
 
 function getMapping<ParamsType extends URLParams, ResponseType>() {
     const mapping = function(id?: string, params?: ParamsType): Promise<ResponseType> {
-        return request({mapping, id, params})
+        return request({mappingOptions: mappingToOptions.get(mapping), id, params})
     };
     mappingToOptions.set(mapping, {method: 'GET'});
     return mapping;
@@ -98,7 +41,7 @@ function getMapping<ParamsType extends URLParams, ResponseType>() {
 
 function getAllMapping<ParamsType extends URLParams, ResponseType>() {
     const mapping = function(params?: ParamsType): Promise<ResponseType> {
-        return request({mapping, params})
+        return request({mappingOptions: mappingToOptions.get(mapping), params})
     };
     mappingToOptions.set(mapping, {method: 'GET'});
     return mapping;
@@ -107,7 +50,7 @@ function getAllMapping<ParamsType extends URLParams, ResponseType>() {
 
 function postMapping<DataType, ResponseType>() {
     const mapping = function(body: DataType): Promise<ResponseType> {
-        return request({mapping, body})
+        return request({mappingOptions: mappingToOptions.get(mapping), body})
     };
     mappingToOptions.set(mapping, {method: 'POST'});
     return mapping;
@@ -116,7 +59,7 @@ function postMapping<DataType, ResponseType>() {
 
 function putMapping<DataType, ResponseType>() {
     const mapping = function(id: string, body: DataType): Promise<ResponseType> {
-        return request({mapping, id, body})
+        return request({mappingOptions: mappingToOptions.get(mapping), id, body})
     };
     mappingToOptions.set(mapping, {method: 'PUT'});
     return mapping;
@@ -125,7 +68,7 @@ function putMapping<DataType, ResponseType>() {
 
 function deleteMapping<ResponseType>() {
     const mapping = function(id: string): Promise<ResponseType> {
-        return request({mapping, id})
+        return request({mappingOptions: mappingToOptions.get(mapping), id})
     };
     mappingToOptions.set(mapping, {method: 'DELETE'});
     return mapping;
