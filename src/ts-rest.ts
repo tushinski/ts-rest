@@ -1,4 +1,5 @@
 import {walkObject} from "./utils/walk-object";
+import {encodeUrlParams, URLParams} from "./utils/encode-url-params";
 
 type HTTPMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 type ClientMethod = (...data: any[]) => Promise<any>;
@@ -10,7 +11,6 @@ type ResourceDescriptor = { [key: string]: ResourceDescriptor } & {
     delete?: ClientMethod,
     single?: (id: string) => object
 };
-type URLParams = {[key: string]: string | number | boolean | null};
 type ClientOptions = {
     url: string,
     descriptor: ResourceDescriptor,
@@ -44,15 +44,6 @@ const clientMethodToHttpMethod: {[key: string]: HTTPMethod} = {
 };
 const mappingToOptions = new Map<Function, MappingOptions>();
 const descriptorProviderToPath = new Map<Function, string>();
-
-
-function encodeUrlParams(params: URLParams) {
-    let paramsEncoded = [];
-    for (let name in params) {
-        paramsEncoded.push(`${name}=${params[name]}`);
-    }
-    return paramsEncoded.join('&');
-}
 
 
 function request(options: RequestOptions) {
