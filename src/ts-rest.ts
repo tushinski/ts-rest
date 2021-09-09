@@ -166,6 +166,8 @@ function initClient(options: ClientOptions) {
         mappingOptions.path = resourcePath;
         mappingOptions.descriptorOptions = options;
     });
+
+    Object.freeze(options.descriptor);
 }
 
 
