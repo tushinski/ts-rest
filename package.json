@@ -17,12 +17,21 @@
   "author": "Alexey Tushinski",
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
-    "pack" : "node ./pack.js"
+    "build": "webpack --env=config='main'",
+    "build-tests": "webpack --env=target='node' --env=config='tests'",
+    "test": "npm run build-tests && node ./build-tests/test.js",
+    "pack": "node ./pack.js"
   },
   "devDependencies": {
-    "typescript": "^4.3.5"
+    "@types/node": "^16.9.1",
+    "dts-bundle": "^0.7.3",
+    "node-fetch": "^3.0.0",
+    "typescript": "^4.3.5",
+    "webpack": "^5.52.0",
+    "webpack-cli": "^4.8.0"
   },
   "dependencies": {
+    "ts-loader": "^9.2.5",
+    "url-join": "^4.0.1"
   }
 }

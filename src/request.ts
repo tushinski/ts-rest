@@ -1,5 +1,7 @@
-import {encodeUrlParams, URLParams} from "./encode-url-params";
-import {MappingOptions} from "../common-typings";
+import {encodeUrlParams, URLParams} from "./utils/encode-url-params";
+import {MappingOptions} from "./common-typings";
+
+const fetch = require('fetch-method').default;
 
 export type HTTPMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
