@@ -5,7 +5,7 @@ export type HTTPMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
 export function request(options: {mappingOptions: MappingOptions, body?, params?: URLParams, id?: string}) {
     const requestOptions: RequestInit = {};
-    let url = `${options.mappingOptions.descriptorOptions.url}/${options.mappingOptions.path}`;
+    let url = `${options.mappingOptions.descriptorOptions.url}${options.mappingOptions.path}`;
 
     if (options.id) {
         url += `/${options.id}`;

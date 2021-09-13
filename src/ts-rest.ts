@@ -1,6 +1,6 @@
 import {walkObject} from "./utils/walk-object";
 import {URLParams} from "./utils/encode-url-params";
-import {HTTPMethod, request} from "./utils/request";
+import {HTTPMethod, request} from "./request";
 import {ClientOptions, MappingOptions, ResourceDescriptor} from "./common-typings";
 
 
@@ -12,12 +12,12 @@ const clientMethodToHttpMethod: {[key: string]: HTTPMethod} = {
     delete: 'DELETE'
 };
 const mappingToOptions = new Map<Function, MappingOptions>();
-const descriptorProviderToPath = new Map<Function, string>();
+const descriptorProviderToUrl = new Map<Function, string>();
 
 
-function nested<NestedDescriptor extends ResourceDescriptor>(descriptorConstructor: () => NestedDescriptor) {
+function sub<NestedDescriptor extends ResourceDescriptor>(descriptorConstructor: () => NestedDescriptor) {
     const descriptorProvider = function(id: string): NestedDescriptor {
-        const basePath = descriptorProviderToPath.get(descriptorProvider);
+        const basePath = descriptorProviderToUrl.get(descriptorProvider);
         const descriptor = descriptorConstructor();
         initClient({
             descriptor,
@@ -25,7 +25,7 @@ function nested<NestedDescriptor extends ResourceDescriptor>(descriptorConstruct
         });
         return descriptor;
     };
-    descriptorProviderToPath.set(descriptorProvider, '');
+    descriptorProviderToUrl.set(descriptorProvider, '');
     return descriptorProvider;
 }
 
@@ -81,10 +81,11 @@ function initClient(options: ClientOptions) {
     walkObject(options.descriptor, ({ value, location, key, isLeaf }) => {
         if (!isLeaf) return;
 
-        const resourcePath = '/' + location.slice(0, location.length - 1).join('/');
+        let resourcePath = location.slice(0, location.length - 1).join('/');
+        resourcePath = resourcePath && `/${resourcePath}`;
 
-        if (descriptorProviderToPath.has(value)) {
-            descriptorProviderToPath.set(value, resourcePath);
+        if (descriptorProviderToUrl.has(value)) {
+            descriptorProviderToUrl.set(value, `${options.url}${resourcePath}`);
             return;
         }
 
@@ -105,4 +106,4 @@ function initClient(options: ClientOptions) {
 }
 
 
-export { getMapping, getAllMapping, postMapping, putMapping, deleteMapping, initClient };
+export { getMapping, getAllMapping, postMapping, putMapping, deleteMapping, sub, initClient };
