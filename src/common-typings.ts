@@ -1,6 +1,8 @@
-import {HTTPMethod} from "./utils/request";
+import {HTTPMethod} from "./request";
 
-export type ResourceDescriptor = { [key: string]: ResourceDescriptor } & {
+type Pojo = {[key: string]: any};
+
+export type ResourceDescriptor = { [key: string]: Pojo } & {
     get?: ClientMethod,
     getAll?: ClientMethod,
     post?: ClientMethod,
