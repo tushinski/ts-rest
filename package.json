@@ -19,18 +19,20 @@
   "scripts": {
     "build": "webpack --env=config='main'",
     "build-tests": "webpack --env=target='node' --env=config='tests'",
-    "test": "npm run build-tests && node ./build-tests/test.js",
+    "test": "npm run build-tests && jest",
     "pack": "node ./pack.js"
   },
   "devDependencies": {
     "@types/node": "^16.9.1",
     "dts-bundle": "^0.7.3",
+    "jest": "^27.2.0",
     "node-fetch": "^3.0.0",
     "typescript": "^4.3.5",
     "webpack": "^5.52.0",
     "webpack-cli": "^4.8.0"
   },
   "dependencies": {
+    "@types/jest": "^27.0.1",
     "ts-loader": "^9.2.5",
     "url-join": "^4.0.1"
   }

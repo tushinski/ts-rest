@@ -22,16 +22,67 @@ const dogApi = {
     }
 };
 
-initClient({
-    descriptor: dogApi,
-    url: `https://dog.ceo/api`
+beforeAll(() => {
+    initClient({
+        descriptor: dogApi,
+        url: `https://dog.ceo/api`
+    });
 });
 
-const hound = dogApi.breed.single('hound');
+test('getAll', () => {
+    return dogApi
+        .breeds
+        .list
+        .all
+        .getAll()
+        .then(resp => {
+            expect(resp.status).toBe('success');
+            expect(resp.message).toBeTruthy();
+        })
+});
 
-hound.list.getAll()
-    .then((resp) => {
-        const firstSubBreed = resp.message[0];
-        return hound.single(firstSubBreed).images.getAll();
-    })
-    .then((resp) => console.log(resp));
+test('single.getAll', () => {
+    return dogApi
+        .breed
+        .single('hound')
+        .list
+        .getAll()
+        .then((resp) => {
+            expect(resp.status).toBe('success');
+            expect(resp.message).toBeInstanceOf(Array);
+        })
+
+});
+
+test('single.single.getAll (single chain)', () => {
+    return dogApi
+        .breed
+        .single('hound')
+        .single('afghan')
+        .images
+        .getAll()
+        .then((resp) => {
+            expect(resp.status).toBe('success');
+            expect(resp.message).toBeInstanceOf(Array);
+        })
+
+});
+
+test('single.single.getAll (two calls)', () => {
+    const hound = dogApi.breed.single('hound');
+
+    return hound.list.getAll()
+        .then((resp) => {
+            expect(resp.status).toBe('success');
+            expect(resp.message).toBeInstanceOf(Array);
+
+            const firstSubBreed = resp.message[0];
+            expect(firstSubBreed).not.toBeFalsy();
+
+            return hound.single(firstSubBreed).images.getAll();
+        })
+        .then((resp) => {
+            expect(resp.status).toBe('success');
+            expect(resp.message).toBeInstanceOf(Array);
+        });
+});
