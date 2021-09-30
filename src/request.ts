@@ -23,10 +23,10 @@ type RequestOptionsModifier = (defaultOptions: RequestInitOverriding, path: stri
 type ResponseModifier = (resp: Response, path: string, method: HTTPMethod) => any;
 type RequestBodyModifier = (body: any, path: string, method: HTTPMethod) => BodyInit | null;
 
-type RequestModifiers = {
-    requestOptionsModifier: RequestOptionsModifier,
-    responseModifier: ResponseModifier,
-    requestBodyModifier: RequestBodyModifier
+export type RequestModifiers = {
+    optionsModifier?: RequestOptionsModifier,
+    bodyModifier?: RequestBodyModifier,
+    responseModifier?: ResponseModifier,
 };
 
 type RequestOptions = {
@@ -43,17 +43,25 @@ const defaultRequestOptions: RequestInitOverriding = {
 };
 
 const defaultModifiers: RequestModifiers = {
-    requestOptionsModifier: (defaultOptions) => defaultOptions,
-    requestBodyModifier: (body) => JSON.stringify(body),
+    optionsModifier: (defaultOptions) => defaultOptions,
+    bodyModifier: (body) => JSON.stringify(body),
     responseModifier: (resp) => resp.json()
 };
 
 export function request({mappingOptions, body, params, id}: RequestOptions) {
     let url = `${mappingOptions.descriptorOptions.url}${mappingOptions.path}`;
-    const requestOptions: RequestInit = {
-        ...defaultModifiers.requestOptionsModifier(defaultRequestOptions, mappingOptions.path, mappingOptions.method),
-        method: mappingOptions.method
+    let requestOptions: RequestInit;
+    const requestModifiers = {
+        ...defaultModifiers,
+        ...mappingOptions.descriptorOptions.requestModifiers
     };
+
+    if (requestModifiers.optionsModifier) {
+        requestOptions = requestModifiers.optionsModifier({...defaultRequestOptions}, mappingOptions.path, mappingOptions.method);
+    } else {
+        requestOptions = defaultRequestOptions;
+    }
+    requestOptions.method = mappingOptions.method;
 
     if (id) {
         url += `/${id}`;
@@ -64,9 +72,22 @@ export function request({mappingOptions, body, params, id}: RequestOptions) {
     }
 
     if (body !== undefined) {
-        requestOptions.body = defaultModifiers.requestBodyModifier(body, mappingOptions.path, mappingOptions.method);
+        if (defaultModifiers.bodyModifier) {
+            requestOptions.body = requestModifiers.bodyModifier(body, mappingOptions.path, mappingOptions.method);
+        } else {
+            requestOptions.body = body;
+        }
+    }
+
+    if (requestOptions.body && mappingOptions.method === 'GET') {
+        console.log({url, requestOptions});
     }
 
     return fetch(url, requestOptions)
-        .then(defaultModifiers.responseModifier)
+        .then((resp) => {
+            if (requestModifiers.responseModifier) {
+                return requestModifiers.responseModifier(resp, mappingOptions.path, mappingOptions.method);
+            }
+            return resp;
+        })
 }

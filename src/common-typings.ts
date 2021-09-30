@@ -1,4 +1,4 @@
-import {HTTPMethod} from "./request";
+import {HTTPMethod, RequestModifiers} from "./request";
 
 type Pojo = {[key: string]: any};
 
@@ -15,7 +15,8 @@ export type ClientMethod = (...data: any[]) => Promise<any>;
 
 export type ClientOptions = {
     url: string,
-    descriptor: ResourceDescriptor
+    descriptor: ResourceDescriptor,
+    requestModifiers?: RequestModifiers
 };
 
 export type MappingOptions = {
