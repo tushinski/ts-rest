@@ -1,88 +1,122 @@
-import {getAllMapping, initClient, sub} from "../src/ts-rest";
+import {deleteMapping, getAllMapping, getMapping, initClient, postMapping, putMapping, sub} from "../src/ts-rest";
 
-const dogApi = {
-    breeds: {
-        list: {
-            all: {
-                getAll: getAllMapping<undefined, {message: any, status: string}>(),
-            }
-        }
+type Genre = { id: number, name: string };
+type Movie = { id: number, name: string, genres: number[] };
+type Actor = { id: number, fullName: string, movies: number[] };
+type Event = { year: string, festival: string };
+type Nomination = { festival: string, name: string };
+
+type Response<T> = {
+    data: T,
+    requestData: {
+        url: string,
+        body: any
+    }
+}
+
+const moviesAPI = {
+    movies: {
+        getAll: getAllMapping<{genre?: number}, Response<Movie[]>>(),
+        get: getMapping<undefined, Response<Movie>>(),
+        post: postMapping<Movie, Response<Movie>>(),
+        put: putMapping<Movie, Response<Movie>>(),
+        delete: deleteMapping<Response<{success: boolean}>>()
     },
-    breed: {
+    genres: {
+        getAll: getAllMapping<undefined, Response<Genre[]>>(),
+        get: getMapping<undefined, Response<Genre>>()
+    },
+    actors: {
+        getAll: getAllMapping<undefined, Response<Actor[]>>(),
         single: sub(() => ({
-            list: {
-                getAll: getAllMapping<undefined, {message, status}>()
+            movies: {
+                getAll: getAllMapping<undefined, Response<Movie[]>>()
+            }
+        }))
+    },
+    festivals: {
+        single: sub(() => ({
+            nominations: {
+                get: getMapping<undefined, Response<Nomination>>()
             },
-            single: sub(() => ({
-                images: {
-                    getAll: getAllMapping<undefined, {message, status}>()
-                }
-            }))
+            get: getMapping<undefined, Response<Event>>()
         }))
     }
 };
 
 beforeAll(() => {
     initClient({
-        descriptor: dogApi,
-        url: `https://dog.ceo/api`
+        descriptor: moviesAPI,
+        url: `http://localhost:4000`
     });
 });
 
+test('get', () => {
+    return moviesAPI.genres.get('0')
+        .then((resp) => {
+            expect(resp.data.id).toBe(0);
+        })
+});
+
 test('getAll', () => {
-    return dogApi
-        .breeds
-        .list
-        .all
-        .getAll()
-        .then(resp => {
-            expect(resp.status).toBe('success');
-            expect(resp.message).toBeTruthy();
+    return moviesAPI.movies.getAll()
+        .then((resp) => {
+            expect(resp.data).toBeInstanceOf(Array);
+        })
+});
+
+test('getAll with query params', () => {
+    return moviesAPI.movies.getAll({genre: 0})
+        .then((resp) => {
+            expect(resp.data).toBeInstanceOf(Array);
+        })
+});
+
+test('put', () => {
+    const newMovieName = 'Some name';
+    const newMovieData = { id: 0, name: newMovieName, genres: [0, 1, 2] };
+    return moviesAPI.movies.put('0', newMovieData)
+        .then((resp) => {
+            expect(resp.data.name).toBe(newMovieName);
+        })
+});
+
+test('post', () => {
+    const newMovieName = 'Some name';
+    const newMovieData = { id: 13, name: newMovieName, genres: [0, 1, 2] };
+    return moviesAPI.movies.post(newMovieData)
+        .then((resp) => {
+            expect(resp.data.name).toBe(newMovieName);
+        })
+});
+
+test('delete', () => {
+    return moviesAPI.movies.delete('0')
+        .then((resp) => {
+            expect(resp.data.success).toBe(true);
         })
 });
 
 test('single.getAll', () => {
-    return dogApi
-        .breed
-        .single('hound')
-        .list
-        .getAll()
+    return moviesAPI.actors.single('0').movies.getAll()
         .then((resp) => {
-            expect(resp.status).toBe('success');
-            expect(resp.message).toBeInstanceOf(Array);
+            expect(resp.data).toBeInstanceOf(Array);
         })
 
 });
 
-test('single.single.getAll (single chain)', () => {
-    return dogApi
-        .breed
-        .single('hound')
-        .single('afghan')
-        .images
-        .getAll()
+test('single.subresource.get', () => {
+    const nominationName = 'Nomination Name';
+    return moviesAPI.festivals.single('Cinema Festival').nominations.get(nominationName)
         .then((resp) => {
-            expect(resp.status).toBe('success');
-            expect(resp.message).toBeInstanceOf(Array);
+            expect(resp.data.name).toBe(nominationName);
         })
-
 });
 
-test('single.single.getAll (two calls)', () => {
-    const hound = dogApi.breed.single('hound');
-
-    return hound.list.getAll()
+test('single.get', () => {
+    const eventYear = '1966';
+    return moviesAPI.festivals.single('Cinema Festival').get(eventYear)
         .then((resp) => {
-            expect(resp.status).toBe('success');
-            expect(resp.message).toBeInstanceOf(Array);
-
-            const firstSubBreed = resp.message[0];
-            expect(firstSubBreed).not.toBeFalsy();
-
-            return hound.single(firstSubBreed).images.getAll();
+            expect(resp.data.year).toBe(eventYear);
         })
-        .then((resp) => {
-            expect(resp.status).toBe('success');
-            expect(resp.message).toBeInstanceOf(Array);
-        });
 });
