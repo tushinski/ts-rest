@@ -62,7 +62,8 @@ const sendResponse = ({req, res, data}) => {
         data,
         requestData: {
             url: req.originalUrl,
-            body: req.body
+            body: req.body,
+            testingHeaderValue: req.get('Testing-header')
         }
     };
 
