@@ -1,79 +1,38 @@
 import {walkObject} from "./utils/walk-object";
-
-type MethodName = 'GET' | '_GET' | 'POST' | 'PUT' | 'DELETE';
-type ResourceDescriptor = { [key: string]: ResourceDescriptor | ((data: any) => Promise<any>) };
-type URLParams = {[key: string]: string | number | boolean | null};
-type ApiOptions = {
-    commonRequestOptions?: ExtendedRequestOptions
-};
-type ExtendedRequestOptions = {
-    // method?: string,
-    headers?: {[key: string]: string},
-    // body?: any,
-    mode?: string,
-    credentials?: string,
-    cache?: string,
-    redirect?: string,
-    referref?: string,
-    referrerPolicy?: string,
-    integrity?: string,
-    keepalive?: boolean
-};
-type MappingOptions = {
-    method: MethodName,
-    apiOptions?: ApiOptions
-    url?: string,
-};
+import {URLParams} from "./utils/encode-url-params";
+import {HTTPMethod, request} from "./request";
+import {ClientOptions, MappingOptions, ResourceDescriptor} from "./common-typings";
 
 
+const clientMethodToHttpMethod: {[key: string]: HTTPMethod} = {
+    get: 'GET',
+    getAll: 'GET',
+    post: 'POST',
+    put: 'PUT',
+    delete: 'DELETE'
+};
 const mappingToOptions = new Map<Function, MappingOptions>();
+const descriptorProviderToUrl = new Map<Function, string>();
 
 
-function encodeUrlParams(params: URLParams) {
-    let paramsEncoded = [];
-    for (let name in params) {
-        if (!['number', 'string', 'boolean', 'null'].includes(typeof params[name])) {
-            throw new Error(`Illegal parameter type: parameter: '${params[name]}'; type: '${typeof params[name]}.`);
-        }
-        paramsEncoded.push(`${name}=${params[name]}`);
-    }
-    return paramsEncoded.join('&');
-}
-
-
-function request(options: {mapping, body?, params?: URLParams, id?: string}) {
-    const mappingOptions = mappingToOptions.get(options.mapping);
-    let requestOptions: any = {};
-    let requestUrl = mappingOptions.url;
-
-    if (mappingOptions.method[0] === '_') {
-        requestOptions.method = mappingOptions.method.substr(1);
-    } else {
-        requestOptions.method = mappingOptions.method;
-    }
-    if (options.body !== undefined) {
-        requestOptions.body = JSON.stringify(options.body);
-    }
-    if (options.id) {
-        requestUrl += `/${options.id}`;
-    }
-    if (options.params) {
-        requestUrl += `?${encodeUrlParams(options.params)}`;
-    }
-
-    requestOptions = {
-        ...requestOptions,
-        ...mappingOptions.apiOptions.commonRequestOptions
+function sub<NestedDescriptor extends ResourceDescriptor>(descriptorConstructor: () => NestedDescriptor) {
+    const descriptorProvider = function(id: string): NestedDescriptor {
+        const basePath = descriptorProviderToUrl.get(descriptorProvider);
+        const descriptor = descriptorConstructor();
+        initClient({
+            descriptor,
+            url: `${basePath}/${id}`
+        });
+        return descriptor;
     };
-
-    return fetch(requestUrl, requestOptions)
-        .then(res => res.json())
+    descriptorProviderToUrl.set(descriptorProvider, '');
+    return descriptorProvider;
 }
 
 
 function getMapping<ParamsType extends URLParams, ResponseType>() {
-    const mapping = function(id: string, params?: ParamsType): Promise<ResponseType> {
-        return request({mapping, id, params})
+    const mapping = function(id?: string, params?: ParamsType): Promise<ResponseType> {
+        return request({mappingOptions: mappingToOptions.get(mapping), id, params})
     };
     mappingToOptions.set(mapping, {method: 'GET'});
     return mapping;
@@ -82,16 +41,16 @@ function getMapping<ParamsType extends URLParams, ResponseType>() {
 
 function getAllMapping<ParamsType extends URLParams, ResponseType>() {
     const mapping = function(params?: ParamsType): Promise<ResponseType> {
-        return request({mapping, params})
+        return request({mappingOptions: mappingToOptions.get(mapping), params})
     };
-    mappingToOptions.set(mapping, {method: '_GET'});
+    mappingToOptions.set(mapping, {method: 'GET'});
     return mapping;
 }
 
 
 function postMapping<DataType, ResponseType>() {
     const mapping = function(body: DataType): Promise<ResponseType> {
-        return request({mapping, body})
+        return request({mappingOptions: mappingToOptions.get(mapping), body})
     };
     mappingToOptions.set(mapping, {method: 'POST'});
     return mapping;
@@ -100,7 +59,7 @@ function postMapping<DataType, ResponseType>() {
 
 function putMapping<DataType, ResponseType>() {
     const mapping = function(id: string, body: DataType): Promise<ResponseType> {
-        return request({mapping, id, body})
+        return request({mappingOptions: mappingToOptions.get(mapping), id, body})
     };
     mappingToOptions.set(mapping, {method: 'PUT'});
     return mapping;
@@ -109,33 +68,42 @@ function putMapping<DataType, ResponseType>() {
 
 function deleteMapping<ResponseType>() {
     const mapping = function(id: string): Promise<ResponseType> {
-        return request({mapping, id})
+        return request({mappingOptions: mappingToOptions.get(mapping), id})
     };
     mappingToOptions.set(mapping, {method: 'DELETE'});
     return mapping;
 }
 
 
-function initApi(descriptor: ResourceDescriptor, url: string, options?: ApiOptions) {
+function initClient(options: ClientOptions) {
     options = {...options};
 
-    walkObject(descriptor, ({ value, location, key, isLeaf }) => {
+    walkObject(options.descriptor, ({ value, location, key, isLeaf }) => {
         if (!isLeaf) return;
 
+        let resourcePath = location.slice(0, location.length - 1).join('/');
+        resourcePath = resourcePath && `/${resourcePath}`;
+
+        if (descriptorProviderToUrl.has(value)) {
+            descriptorProviderToUrl.set(value, `${options.url}${resourcePath}`);
+            return;
+        }
+
         const mappingOptions = mappingToOptions.get(value);
-        const resourcePath = '/' + location.slice(0, location.length - 1).join('/');
 
         if (!mappingOptions) {
             throw new Error(`Invalid mapping for: ${location.join('.')}`);
         }
-        if (mappingOptions.method !== key) {
-            throw new Error(`Property name '${key}' doesn't match mapping method: '${mappingOptions.method}'.`);
+        if (mappingOptions.method !== clientMethodToHttpMethod[key]) {
+            throw new Error(`Method name '${key}' doesn't match to '${mappingOptions.method}' mapping.`);
         }
 
-        mappingOptions.url = url + resourcePath;
-        mappingOptions.apiOptions = options;
+        mappingOptions.path = resourcePath;
+        mappingOptions.descriptorOptions = options;
     });
+
+    Object.freeze(options.descriptor);
 }
 
 
-export { getMapping, getAllMapping, postMapping, putMapping, deleteMapping, initApi };
+export { getMapping, getAllMapping, postMapping, putMapping, deleteMapping, sub, initClient };
