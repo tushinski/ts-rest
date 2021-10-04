@@ -143,6 +143,62 @@ Options object properties:
 
 After the descriptor object initialized it becomes a REST client and can be used for requests.
 
+### Sub-resources (nested descriptors)
+In most of the cases paths of single resources end with a single path parameter - 
+resource id. For example:
+
+`/api/movies/{movieId}`
+
+But there are cases when a resource contains nested collections (or sub-resources):
+
+`/api/actors/{actorId}/movies`
+
+Ts-rest provides special function `sub` to describe nesting:
+```typescript
+const api = {
+    actors: {
+        single: sub(() => ({
+            movies: {
+                getAll: getAllMapping<undefined, Movie[]>()
+            },
+        }))
+    }
+}
+```
+Nesting is described with a special property `single`, using the `sub` function,
+which accepts single argument - a function returning nested descriptor.
+
+That's how requests to sub-resources look like with an initialized client:
+```typescript
+api.actors.single(1).movies.getAll()
+    .then(movies => /*...*/)
+```
+You should think of it like of getting a _single_ resource by id:
+
+`/api/actors/1`
+
+and continuing to work with it's sub-resources:
+
+`/api/actors/1/movies`
+
+Nested descriptor is described by the same rules as the main API descriptor. It can represent it's own tree 
+structure and contain any mappings.
+
+Since the `single` method only returns a nested descriptor (and doesn't perform any requests), 
+it's result can be written to a variable and reused:
+```typescript
+const actor1 = api.actors.single(1);
+
+actor1.movies.getAll()
+    .then(movies => /*...*/);
+
+actor1.awards.post(/* award data */)
+    .then(award => /*...*/);
+```
+
+Also, nested descriptor can contain other nested descriptors.
+
+
 ### Request modifiers
 Request modifiers are special functions used to modify REST client requests.
 
