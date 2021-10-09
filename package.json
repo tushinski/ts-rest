@@ -3,6 +3,7 @@
   "version": "0.2.1",
   "description": "Library for creating typed REST clients.",
   "main": "build/ts-rest.js",
+  "types": "build/ts-rest.d.ts",
   "files": ["build/*"],
   "repository": {
     "type": "git",
