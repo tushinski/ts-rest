@@ -1,1 +1,2 @@
-module.exports = window.fetch;
+const fetchMethod = fetch;
+export default fetchMethod;
