@@ -80,6 +80,17 @@ module.exports = (env) => {
                 }
             };
             break;
+        case 'browser-test':
+            targetConfig = {
+                entry: {
+                    app: path.resolve('./browser-test/test.ts')
+                },
+                output: {
+                    filename: 'test.js',
+                    path: path.resolve('./browser-test/'),
+                }
+            };
+            break;
         default:
             throw new Error('Undefined config name in env.config');
     }
