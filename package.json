@@ -1,8 +1,9 @@
 {
   "name": "@tushinski/ts-rest",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Library for creating typed REST clients.",
-  "main": "./ts-rest.js",
+  "main": "build/ts-rest.js",
+  "files": ["build/*"],
   "repository": {
     "type": "git",
     "url": "https://github.com/tushinski/ts-rest"
@@ -19,9 +20,10 @@
   "scripts": {
     "build": "webpack --env=config='main'",
     "build-tests": "webpack --env=target='node' --env=config='tests'",
-    "test": "npm run build-tests && jest",
+    "build-browser-test": "webpack --env=config='browser-test'",
     "run-mock": "node ./mock/mock-service.js",
-    "pack": "node ./pack.js"
+    "test": "npm run build-tests && jest",
+    "publish": "npm run build && npm publish"
   },
   "devDependencies": {
     "@types/node": "^16.9.1",
