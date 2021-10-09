@@ -50,7 +50,12 @@ module.exports = (env) => {
                 },
                 output: {
                     filename: 'ts-rest.js',
-                    path: path.resolve('./build')
+                    path: path.resolve('./build'),
+                    library: {
+                        name: 'ts-rest',
+                        type: 'umd',
+                        umdNamedDefine: true
+                    }
                 },
                 plugins: [
                     new DtsBundlePlugin({
