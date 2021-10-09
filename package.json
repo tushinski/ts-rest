@@ -1,6 +1,6 @@
 {
   "name": "@tushinski/ts-rest",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Library for creating typed REST clients.",
   "main": "build/ts-rest.js",
   "types": "build/ts-rest.d.ts",
