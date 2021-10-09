@@ -5,6 +5,9 @@ Based on [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)
 
 _NodeJS version coming soon..._
 
+> :warning: Version 0.2.0 contained a critical issue (exported units could not be correctly imported from the package).
+> <br>Please, use version 0.2.1 (or higher).
+
 ## Installation
 `npm i @tushinski/ts-rest`
 
