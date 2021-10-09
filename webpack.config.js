@@ -50,7 +50,12 @@ module.exports = (env) => {
                 },
                 output: {
                     filename: 'ts-rest.js',
-                    path: path.resolve('./build')
+                    path: path.resolve('./build'),
+                    library: {
+                        name: 'ts-rest',
+                        type: 'umd',
+                        umdNamedDefine: true
+                    }
                 },
                 plugins: [
                     new DtsBundlePlugin({
@@ -72,6 +77,17 @@ module.exports = (env) => {
                 output: {
                     filename: 'test.js',
                     path: path.resolve('./build-tests')
+                }
+            };
+            break;
+        case 'browser-test':
+            targetConfig = {
+                entry: {
+                    app: path.resolve('./browser-test/test.ts')
+                },
+                output: {
+                    filename: 'test.js',
+                    path: path.resolve('./browser-test/'),
                 }
             };
             break;
