@@ -2,7 +2,7 @@ import {initClient} from "../src/ts-rest";
 import {moviesAPI} from "./testingDescriptor";
 
 
-describe('Requests testing', () => {
+describe('Requests', () => {
     beforeAll(() => {
         initClient({
             descriptor: moviesAPI,
@@ -81,7 +81,7 @@ describe('Requests testing', () => {
     });
 });
 
-describe('Request modificators testing.', () => {
+describe('Request modifiers', () => {
     beforeAll(() => {
         initClient({
             descriptor: moviesAPI,
@@ -106,7 +106,7 @@ describe('Request modificators testing.', () => {
         });
     });
 
-    test('get + modifiers', () => {
+    test('modifiers + get', () => {
         return moviesAPI.movies.post({ id: 0, name: 'name', genres: []})
             .then((resp) => {
                 expect(resp.data.name).toBe('modified name');
