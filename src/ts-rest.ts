@@ -1,7 +1,8 @@
 import {walkObject} from "./utils/walk-object";
 import {URLParams} from "./utils/encode-url-params";
-import {HTTPMethod, request} from "./request";
-import {ClientOptions, MappingOptions, ResourceDescriptor} from "./common-typings";
+import {request} from "./request";
+import {HTTPMethod} from "./types/request-types";
+import {MappingOptions, RestClient, RestClientOptions} from "./types/client-types";
 
 
 const clientMethodToHttpMethod: {[key: string]: HTTPMethod} = {
@@ -15,7 +16,7 @@ const mappingToOptions = new Map<Function, MappingOptions>();
 const descriptorProviderToUrl = new Map<Function, string>();
 
 
-function sub<NestedDescriptor extends ResourceDescriptor>(descriptorConstructor: () => NestedDescriptor) {
+function sub<NestedDescriptor extends RestClient>(descriptorConstructor: () => NestedDescriptor) {
     const descriptorProvider = function(id: string): NestedDescriptor {
         const basePath = descriptorProviderToUrl.get(descriptorProvider);
         const descriptor = descriptorConstructor();
@@ -75,7 +76,7 @@ function deleteMapping<ResponseType>() {
 }
 
 
-function initClient(options: ClientOptions) {
+function initClient(options: RestClientOptions) {
     options = {...options};
 
     walkObject(options.descriptor, ({ value, location, key, isLeaf }) => {

@@ -1,48 +1,16 @@
-import {encodeUrlParams, URLParams} from "./utils/encode-url-params";
-import {MappingOptions} from "./common-typings";
+import {encodeUrlParams} from "./utils/encode-url-params";
+import {RequestModification, RequestOptions} from "./types/request-types";
+import {ModifiersMap} from "./types/modifiers-types";
 
 const fetch = require('fetch-method').default;
 
-export type HTTPMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
-
-// RequestInit type without 'body' and 'method' props.
-type RequestInitOverriding = {
-    cache?: RequestCache;
-    credentials?: RequestCredentials;
-    headers?: HeadersInit;
-    integrity?: string;
-    keepalive?: boolean;
-    mode?: RequestMode;
-    redirect?: RequestRedirect;
-    referrer?: string;
-    referrerPolicy?: ReferrerPolicy;
-    signal?: AbortSignal | null;
-    window?: any;
-};
-type RequestOptionsModifier = (defaultOptions: RequestInitOverriding, path: string, method: HTTPMethod) => RequestInitOverriding;
-type ResponseModifier = (resp: Response, path: string, method: HTTPMethod) => any;
-type RequestBodyModifier = (body: any, path: string, method: HTTPMethod) => BodyInit | null;
-
-export type RequestModifiers = {
-    optionsModifier?: RequestOptionsModifier,
-    bodyModifier?: RequestBodyModifier,
-    responseModifier?: ResponseModifier,
-};
-
-type RequestOptions = {
-    mappingOptions: MappingOptions,
-    body?,
-    params?: URLParams,
-    id?: string
-};
-
-const defaultRequestOptions: RequestInitOverriding = {
+const defaultRequestOptions: RequestModification = {
     headers: {
         'Content-Type': 'application/json; charset=UTF-8'
     }
 };
 
-const defaultModifiers: RequestModifiers = {
+const defaultModifiers: ModifiersMap = {
     optionsModifier: (defaultOptions) => defaultOptions,
     bodyModifier: (body) => JSON.stringify(body),
     responseModifier: (resp) => resp.json()
