@@ -1,6 +1,6 @@
 /** @type {import('@jest/types').Config.InitialOptions} */
 const config = {
-    testMatch: ['**/build-tests/*.js']
+    testMatch: ['**/node-test-build/*.js']
 };
 
 module.exports = config;

@@ -1,4 +1,4 @@
-import {deleteMapping, getAllMapping, getMapping, postMapping, putMapping, sub} from "../build/ts-rest.js";
+import {deleteMapping, getAllMapping, getMapping, postMapping, putMapping, sub} from "../browser-build/ts-rest.js";
 
 type Genre = { id: number, name: string };
 type Movie = { id: number, name: string, genres: number[] };

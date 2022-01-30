@@ -1,102 +1,21 @@
-const path = require('path');
+const {browserVersionConfig} = require("./webpack/browser-version-config");
+const {nodeVersionConfig} = require("./webpack/node-version-config");
+const {browserTestConfig} = require("./webpack/browser-test-config");
+const {nodeTestConfig} = require("./webpack/node-test-config");
 
-function DtsBundlePlugin(options){
-    this.apply = function (compiler) {
-        compiler.hooks.done.tap('DtsBundlePlugin', function(){
-            const dts = require('dts-bundle');
-            dts.bundle(options);
-        });
-    };
+const nameToConfig = {
+    browser: browserVersionConfig,
+    node: nodeVersionConfig,
+    "test": nodeTestConfig,
+    "browser-test": browserTestConfig,
 }
 
-module.exports = (env) => {
-    let targetConfig;
+module.exports = (env, argv) => {
+    const config = nameToConfig[env.config];
 
-    const tsLoaderOptions = {
-        compilerOptions: {
-        }
-    };
-
-    const commonConfig = {
-        mode: 'none',
-        devtool: false,
-        resolve: {
-            extensions: ['.ts'],
-            alias: {
-                'fetch-method': env.target === 'node' ? 'node-fetch' : path.resolve('./src/utils/window-fetch.ts')
-            },
-        },
-        module: {
-            rules: [
-                {
-                    test: /\.ts$/,
-                    exclude: '/node_modules/',
-                    use: {
-                        loader: 'ts-loader',
-                        options: tsLoaderOptions
-                    },
-                }
-            ],
-        },
-    };
-
-    switch (env.config) {
-        case 'main':
-            tsLoaderOptions.compilerOptions.declaration = true;
-
-            targetConfig = {
-                entry: {
-                    app: path.resolve('./src/ts-rest.ts')
-                },
-                output: {
-                    filename: 'ts-rest.js',
-                    path: path.resolve('./build'),
-                    library: {
-                        name: 'ts-rest',
-                        type: 'umd',
-                        umdNamedDefine: true
-                    }
-                },
-                plugins: [
-                    new DtsBundlePlugin({
-                        name: 'ts-rest',
-                        main: path.resolve('./src/ts-rest.d.ts'),
-                        out: path.resolve('./build/ts-rest.d.ts'),
-                        removeSource: true,
-                        outputAsModuleFolder: true
-                    }),
-                ]
-            };
-            break;
-        case 'tests':
-            targetConfig = {
-                target: 'node',
-                entry: {
-                    app: path.resolve('./tests/test.ts')
-                },
-                output: {
-                    filename: 'test.js',
-                    path: path.resolve('./build-tests')
-                }
-            };
-            break;
-        case 'browser-test':
-            targetConfig = {
-                entry: {
-                    app: path.resolve('./browser-test/test.ts')
-                },
-                output: {
-                    filename: 'test.js',
-                    path: path.resolve('./browser-test/'),
-                }
-            };
-            break;
-        default:
-            throw new Error('Undefined config name in env.config');
+    if (!config) {
+        throw new Error("Incorrect config name");
     }
 
-    return {
-        ...commonConfig,
-        ...targetConfig
-    }
+    return config(env, argv);
 };

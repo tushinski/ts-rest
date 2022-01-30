@@ -1,4 +1,4 @@
-import {initClient} from "../src/ts-rest";
+import {initClient} from "../node-build/ts-rest-node.js";
 import {moviesAPI} from "./testingDescriptor";
 
 
