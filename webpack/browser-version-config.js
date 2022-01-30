@@ -1,6 +1,7 @@
 const path = require("path");
-const {DtsBundlePlugin} = require("./utils/DtsBundlePlugin");
+const {DtsBundlePlugin} = require("./plugins/DtsBundlePlugin");
 const {typescriptRules} = require("./utils/typescript-rules");
+const {PostBuildPlugin} = require("./plugins/PostBuildPlugin");
 
 function browserVersionConfig(env, argv) {
     return {
@@ -34,6 +35,9 @@ function browserVersionConfig(env, argv) {
                 removeSource: true,
                 outputAsModuleFolder: true
             }),
+            new PostBuildPlugin({
+                target: "browser"
+            })
         ]
     }
 }

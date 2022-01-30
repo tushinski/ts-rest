@@ -1,6 +1,7 @@
 const path = require("path");
-const {DtsBundlePlugin} = require("./utils/DtsBundlePlugin");
+const {DtsBundlePlugin} = require("./plugins/DtsBundlePlugin");
 const {typescriptRules} = require("./utils/typescript-rules");
+const {PostBuildPlugin} = require("./plugins/PostBuildPlugin");
 
 function nodeVersionConfig(env, argv) {
     return {
@@ -35,6 +36,9 @@ function nodeVersionConfig(env, argv) {
                 removeSource: true,
                 outputAsModuleFolder: true
             }),
+            new PostBuildPlugin({
+                target: "node"
+            })
         ],
     }
 }
