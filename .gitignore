@@ -1,5 +1,7 @@
-/build
 /node_modules
 /.idea
-/package
-/build-tests
+
+/node-build
+/node-test-build
+/browser-build
+/browser-test-build
