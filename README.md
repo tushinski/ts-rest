@@ -1,60 +1,72 @@
 # ts-rest
-Library for creating typed REST clients.
+Universal REST API client for TypeScript.
 
-Based on [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API).
-
-_NodeJS version coming soon..._
-
-> :warning: Version 0.2.0 contained a critical issue (exported units could not be correctly imported from the package).
-> <br>Please, use version 0.2.1 (or higher).
+✅ Pure REST <br>
+✅ Strongly typed <br>
+✅ Customizable <br>
+✅ Tested <br>
+✅ JSON (de)serialization out of the box
 
 ## Installation
-`npm i @tushinski/ts-rest`
+browser version: <br>
+`npm i @tushinski/ts-rest` <br>
 
-## Concept
-Ts-rest library created to make working with REST API organized, simple and clear.
-It proposes you to create a single configuration object, describing methods of a REST API,
-including allowed parameters, request body type and response type. 
-This object's called _API descriptor_. The same object, after it is initialized, 
-becomes strongly typed REST client.
+node.js version: <br>
+`npm i @tushinski/ts-rest-node` <br>
 
-## Usage
+## Quick start
+#### ☝ Create a client
 ```typescript
-    import { getMapping, postMapping, initClient } from 'ts-rest';
+    import { getMapping, initClient } from 'ts-rest';
 
-    // your API descriptor
-    const api = {
+    const restClient = {
         users: {
-            get: getMapping<undefined, User>(), // mapping
-        },
-        products: {
-            get: getMapping<undefined, Product>(),
-            post: postMapping<Product, Product>()
-        }   
-    };
-    
-    // initialization
+            get: getMapping<{}, { name: string }>(), // mapping for [GET] /users/:id
+        }
+    }
+```
+
+#### ✌ Initialize
+```typescript
     initClient({
-        descriptor: api,
+        client: restClient,
         url: `https://example.com/rest`
-    });
-    
-    // fetching user data
-    api.users.get('id011235813')
-        .then(user => { /*...*/ });
+    })
+```
+
+#### 🤟 Use
+```typescript
+    restClient.users.get('alex')
+        .then(user => console.log(user.name));
+
+    // the resulting request: [GET] https://example.com/rest/alex
 ```
 
 ## Documentation
-### API descriptor
-A plain object representing a tree structure of target API.
+### Client
+A plain object representing the tree structure of a target API.
 
-The object from the example represents an API that provides these methods:
-- `[GET] /users/:id`
-- `[GET] /products/:id`
-- `[POST] /products/`
+For example, for an API, providing these methods:
+
+`[GET] /docs/:id` <br>
+`[POST] /docs/` <br>
+`[PUT] /docs/:id`
+
+a client will look like this:
+```typescript
+    const client = {
+        docs: {
+            get: getMapping<{}, Document>(),
+            post: postMapping<Document, Document>(),
+            put: putMapping<Document, Document>() 
+        }
+    }
+```
+_(where `Document` is a user-defined type)_
 
 ### Mappings
-Ts-rest provides several functions for creating of mappings for each HTTP method.
+Ts-rest provides several functions for mappings. <br>
+Their generic types are used to specify types of different request parameters.
 
 #### GET (single resource)
 Mapping:
@@ -65,7 +77,7 @@ Mapping:
 ```
 Usage:
 ```typescript
-api.get(id?: string, params?: ParamsType)
+client.get(id?: string, params?: ParamsType)
 ```
 
 #### GET (collection)
@@ -77,7 +89,7 @@ Mapping:
 ```
 Usage:
 ```typescript
-api.getAll(params?: ParamsType)
+client.getAll(params?: ParamsType)
 ```
 
 #### POST
@@ -89,7 +101,7 @@ Mapping:
 ```
 Usage:
 ```typescript
-api.post(body: DataType)
+client.post(body: DataType)
 ```
 
 #### PUT
@@ -101,7 +113,7 @@ Mapping:
 ```
 Usage:
 ```typescript
-api.put(id: string, body: DataType)
+client.put(id: string, body: DataType)
 ```
 
 #### DELETE
@@ -113,84 +125,62 @@ Mapping:
 ```
 Usage:
 ```typescript
-api.delete(id: string)
+client.delete(id: string)
 ```
 
-### Response type
-ResponseType - the type of response you expected.
-Ts-rest parses JSON responses by default, so you can specify a type of the final data 
-you expect to receive.
+### Mapping types
+- `ResponseType` - type of response body
+- `DataType` - type of request body
+- `ParamsType` - type of a search query parameters map
 
-### Data type
-DataType - a type of data sent in the request body.
-Ts-rest encodes request body data to JSON string by default.
-
-### URL query parameters
-Search query parameters is specified with a plain object,
-containing `parameter: value` pairs:
+### Search query parameters (ParamsType)
+You can specify search query parameters using a plain object:
 ```typescript
-movieApi.movies.getAll({genre: 'drama', year: 1966})
-
-// the request url will be: '/movies/?genre=drama&year=1966'
-```
-You can declare a type of parameters object for GET methods (see _Mappings_).
-
-### Initialization
-Ts-rest provides the function for an API descriptor initialization:
-`initClient(options: ClientOptions)`
-
-Options object properties:
-- url - url of target API
-- descriptor - API descriptor
-- requestModifiers (optional) - object containing request modifiers (see _Request modifiers_)
-
-After the descriptor object initialized it becomes a REST client and can be used for requests.
-
-### Sub-resources (nested descriptors)
-In most of the cases paths of single resources end with a single path parameter - 
-resource id. For example:
-
-`/api/movies/{movieId}`
-
-But there are cases when a resource contains nested collections (or sub-resources):
-
-`/api/actors/{actorId}/movies`
-
-Ts-rest provides special function `sub` to describe nesting:
-```typescript
-const api = {
-    actors: {
-        single: sub(() => ({
-            movies: {
-                getAll: getAllMapping<undefined, Movie[]>()
-            },
-        }))
+    const moviesApiClient = {
+        movies: {
+            getAll: getAll<{genre: string, year: number}>()
+        }
     }
-}
+    
+    // initialization...
+    
+    moviesApiClient.movies.getAll({genre: 'drama', year: 1966})
 ```
-Nesting is described with a special property `single`, using the `sub` function,
-which accepts single argument - a function returning nested descriptor.
 
-That's how requests to sub-resources look like with an initialized client:
+### Sub-resources
+In most of the cases paths of single resources end with a single path parameter - 
+a resource id. 
+But there are cases when a resource contains nested collections (or sub-resources), like:
+
+`<api_path>/actors/{actorId}/movies`
+
+Ts-rest provides special function `sub` for describing sub resources:
 ```typescript
-api.actors.single(1).movies.getAll()
-    .then(movies => /*...*/)
+    const client = {
+        actors: {
+            single: sub(() => ({
+                movies: {
+                    getAll: getAllMapping<{}, Movie[]>()
+                },
+            }))
+        }
+    }
+
+    client.actors.single(1).movies.getAll() // [GET] <api_path>/actors/1/movies
+        .then(movies => {/*...*/})
 ```
-You should think of it like of getting a _single_ resource by id:
+You can think of it like of getting a _single_ resource by id:
 
-`/api/actors/1`
+`<api_path>/actors/1`
 
-and continuing to work with it's sub-resources:
+and working with it's sub-resources:
 
-`/api/actors/1/movies`
+`<api_path>/actors/1/movies`
 
-Nested descriptor is described by the same rules as the main API descriptor. It can represent it's own tree 
-structure and contain any mappings.
-
-Since the `single` method only returns a nested descriptor (and doesn't perform any requests), 
-it's result can be written to a variable and reused:
+Since the `single` method only returns a "sub-client" (and doesn't perform any requests),
+it's result can be stored to a variable for reusing:
 ```typescript
-const actor1 = api.actors.single(1);
+const actor1 = client.actors.single(1);
 
 actor1.movies.getAll()
     .then(movies => /*...*/);
@@ -199,27 +189,23 @@ actor1.awards.post(/* award data */)
     .then(award => /*...*/);
 ```
 
-Also, nested descriptor can contain other nested descriptors.
-
-
 ### Request modifiers
-Request modifiers are special functions used to modify REST client requests.
+Request modifiers are used to modify request parameters and response data during a request.
 
-They can be specified with `requestModifiers` option (see _Initialization_).
+They can be specified with the `requestModifiers` option (see _Initialization_).
 
 #### Options modifier
-Modifies default options, which will be passed 
-to the `fetch` call during a request;
+Modifies default request parameters (such as headers, content type, etc.);
 
-`optionsModifier: (defaultOptions: RequestInitOverriding, path: string, method: HTTPMethod) => RequestInitOverriding`
+`optionsModifier: (defaultOptions: RequestModification, path: string, method: HTTPMethod) => RequestModification`
 
 #### Body modifier
-Modifies data of request body.
+Modifies request body.
 
 `bodyModifier: (resp: Response, path: string, method: HTTPMethod) => any`
 
 #### Response modifier
-Modifies response returning by `fetch` during request.
+Modifies response data.
 
 `responseModifier: (body: any, path: string, method: HTTPMethod) => BodyInit | null`
 
@@ -227,7 +213,7 @@ Modifies response returning by `fetch` during request.
 If custom modifiers are not specified, default modifiers are used:
 ```typescript
 {
-    optionsModifier: (defaultOptions) => defaultOptions, // contains 'application/json' content header
+    optionsModifier: (defaultOptions) => defaultOptions,
     bodyModifier: (body) => JSON.stringify(body),
     responseModifier: (resp) => resp.json()
 };

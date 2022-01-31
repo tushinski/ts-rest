@@ -1,9 +1,9 @@
-import {initClient} from "../browser-build/ts-rest.js";
+import {initClient} from "../browser-build";
 import {moviesAPI} from "./testingDescriptor";
 
 try {
     initClient({
-        descriptor: moviesAPI,
+        client: moviesAPI,
         url: `http://localhost:4000`
     });
 

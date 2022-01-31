@@ -1,11 +1,11 @@
-import {initClient} from "../node-build/ts-rest-node.js";
+import {initClient} from "../node-build";
 import {moviesAPI} from "./testingDescriptor";
 
 
 describe('Requests', () => {
     beforeAll(() => {
         initClient({
-            descriptor: moviesAPI,
+            client: moviesAPI,
             url: `http://localhost:4000`
         });
     });
@@ -84,7 +84,7 @@ describe('Requests', () => {
 describe('Request modifiers', () => {
     beforeAll(() => {
         initClient({
-            descriptor: moviesAPI,
+            client: moviesAPI,
             url: `http://localhost:4000`,
             requestModifiers: {
                 optionsModifier: (defaultOptions) => {

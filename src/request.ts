@@ -47,10 +47,6 @@ export function request({mappingOptions, body, params, id}: RequestOptions) {
         }
     }
 
-    if (requestOptions.body && mappingOptions.method === 'GET') {
-        console.log({url, requestOptions});
-    }
-
     return fetch(url, requestOptions)
         .then((resp) => {
             if (requestModifiers.responseModifier) {

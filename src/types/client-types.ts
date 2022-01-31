@@ -16,7 +16,7 @@ export type RestClientMethod = (...data: any[]) => Promise<any>;
 
 export type RestClientOptions = {
     url: string,
-    descriptor: RestClient,
+    client: RestClient,
     requestModifiers?: ModifiersMap
 };
 

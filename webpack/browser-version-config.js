@@ -2,6 +2,7 @@ const path = require("path");
 const {DtsBundlePlugin} = require("./plugins/DtsBundlePlugin");
 const {typescriptRules} = require("./utils/typescript-rules");
 const {PostBuildPlugin} = require("./plugins/PostBuildPlugin");
+const CopyPlugin = require("copy-webpack-plugin");
 
 function browserVersionConfig(env, argv) {
     return {
@@ -34,6 +35,11 @@ function browserVersionConfig(env, argv) {
                 out: path.resolve('./browser-build/ts-rest.d.ts'),
                 removeSource: true,
                 outputAsModuleFolder: true
+            }),
+            new CopyPlugin({
+                patterns: [
+                    { from: "./README.md", to: "./README.md" }
+                ]
             }),
             new PostBuildPlugin({
                 target: "browser"

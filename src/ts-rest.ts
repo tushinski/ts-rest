@@ -21,7 +21,7 @@ function sub<NestedDescriptor extends RestClient>(descriptorConstructor: () => N
         const basePath = descriptorProviderToUrl.get(descriptorProvider);
         const descriptor = descriptorConstructor();
         initClient({
-            descriptor,
+            client: descriptor,
             url: `${basePath}/${id}`
         });
         return descriptor;
@@ -79,7 +79,7 @@ function deleteMapping<ResponseType>() {
 function initClient(options: RestClientOptions) {
     options = {...options};
 
-    walkObject(options.descriptor, ({ value, location, key, isLeaf }) => {
+    walkObject(options.client, ({ value, location, key, isLeaf }) => {
         if (!isLeaf) return;
 
         let resourcePath = location.slice(0, location.length - 1).join('/');
@@ -103,7 +103,7 @@ function initClient(options: RestClientOptions) {
         mappingOptions.descriptorOptions = options;
     });
 
-    Object.freeze(options.descriptor);
+    Object.freeze(options.client);
 }
 
 
