@@ -1,6 +1,6 @@
 {
   "name": "@tushinski/ts-rest",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Universal REST API client for TypeScript.",
   "files": [
     "./*"
