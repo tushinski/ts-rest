@@ -3,7 +3,7 @@ import {URLParams} from "./utils/encode-url-params";
 import {request} from "./request";
 import {HTTPMethod} from "./types/request-types";
 import {MappingOptions, RestClient, RestClientOptions} from "./types/client-types";
-
+const urlJoin = require("url-join");
 
 const clientMethodToHttpMethod: {[key: string]: HTTPMethod} = {
     get: 'GET',
@@ -13,21 +13,45 @@ const clientMethodToHttpMethod: {[key: string]: HTTPMethod} = {
     delete: 'DELETE'
 };
 const mappingToOptions = new Map<Function, MappingOptions>();
-const descriptorProviderToUrl = new Map<Function, string>();
+const clientFactoryToUrl = new Map<Function, string>();
 
+function sub<NestedClient extends RestClient>(clientGetter: () => NestedClient) {
+    const clientFactory = function(id: string): NestedClient {
+        const basePath = clientFactoryToUrl.get(clientFactory);
+        const client = clientGetter();
 
-function sub<NestedDescriptor extends RestClient>(descriptorConstructor: () => NestedDescriptor) {
-    const descriptorProvider = function(id: string): NestedDescriptor {
-        const basePath = descriptorProviderToUrl.get(descriptorProvider);
-        const descriptor = descriptorConstructor();
         initClient({
-            client: descriptor,
-            url: `${basePath}/${id}`
+            client,
+            url: urlJoin(basePath, id)
         });
-        return descriptor;
+
+        return client;
     };
-    descriptorProviderToUrl.set(descriptorProvider, '');
-    return descriptorProvider;
+    clientFactoryToUrl.set(clientFactory, '');
+    return clientFactory;
+}
+
+function subPath<NestedClient extends RestClient>(pathRegExp: RegExp, clientGetter: () => NestedClient) {
+    const clientFactory = function(subPath: string): NestedClient {
+        const basePath = clientFactoryToUrl.get(clientFactory);
+        const client = clientGetter();
+
+        if (!pathRegExp.test(subPath)) {
+            throw new Error(
+                `Provided sub path doesn't match the path regexp.\n` +
+                `Sub path: "${subPath}", pattern: "${pathRegExp.source}"`
+            );
+        }
+
+        initClient({
+            client,
+            url: urlJoin(basePath, subPath),
+        });
+
+        return client;
+    };
+    clientFactoryToUrl.set(clientFactory, '');
+    return clientFactory;
 }
 
 
@@ -82,11 +106,11 @@ function initClient(options: RestClientOptions) {
     walkObject(options.client, ({ value, location, key, isLeaf }) => {
         if (!isLeaf) return;
 
-        let resourcePath = location.slice(0, location.length - 1).join('/');
-        resourcePath = resourcePath && `/${resourcePath}`;
+        const resourcePath = location.slice(0, location.length - 1).join('/');
+        const nestedClientPath = urlJoin(options.url, resourcePath);
 
-        if (descriptorProviderToUrl.has(value)) {
-            descriptorProviderToUrl.set(value, `${options.url}${resourcePath}`);
+        if (clientFactoryToUrl.has(value)) {
+            clientFactoryToUrl.set(value, nestedClientPath);
             return;
         }
 
@@ -107,4 +131,13 @@ function initClient(options: RestClientOptions) {
 }
 
 
-export { getMapping, getAllMapping, postMapping, putMapping, deleteMapping, sub, initClient };
+export {
+    getMapping,
+    getAllMapping,
+    postMapping,
+    putMapping,
+    deleteMapping,
+    sub,
+    subPath,
+    initClient,
+};

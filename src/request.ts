@@ -1,6 +1,7 @@
 import {encodeUrlParams} from "./utils/encode-url-params";
 import {RequestModification, RequestOptions} from "./types/request-types";
 import {ModifiersMap} from "./types/modifiers-types";
+const urlJoin = require("url-join");
 
 const fetch = require('fetch-method').default;
 
@@ -17,7 +18,7 @@ const defaultModifiers: ModifiersMap = {
 };
 
 export function request({mappingOptions, body, params, id}: RequestOptions) {
-    let url = `${mappingOptions.descriptorOptions.url}${mappingOptions.path}`;
+    let url = urlJoin(mappingOptions.descriptorOptions.url, mappingOptions.path);
     let requestOptions: RequestInit;
     const requestModifiers = {
         ...defaultModifiers,
@@ -32,11 +33,11 @@ export function request({mappingOptions, body, params, id}: RequestOptions) {
     requestOptions.method = mappingOptions.method;
 
     if (id) {
-        url += `/${id}`;
+        url = urlJoin(url, id);
     }
 
     if (params) {
-        url += `/?${encodeUrlParams(params)}`;
+        url = urlJoin(url, '?', encodeUrlParams(params))
     }
 
     if (body !== undefined) {

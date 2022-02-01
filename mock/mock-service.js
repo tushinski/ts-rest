@@ -15,6 +15,8 @@ app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
     res.setHeader('Access-Control-Allow-Headers', '*');
 
+    console.log(req.path);
+
     if (req.method === 'OPTIONS') {
         res.sendStatus(200);
         return;
@@ -180,6 +182,16 @@ app.get('/festivals/:festival/nominations/:nomination', (req, res) => {
     });
 });
 
+/**
+ * SUBPATHS
+ */
+
+app.get(/\/documents\/.*\.png/, (req, res) => {
+    sendResponse({
+        req, res,
+        data: { size: Math.round(Math.random() * 1000) }
+    })
+});
 
 app.listen(port, () => {
     console.log(`Mock service listening at http://localhost:${port}`);
