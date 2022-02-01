@@ -74,10 +74,23 @@ describe('Requests', () => {
 
     test('single.get', () => {
         const eventYear = '1966';
-        return moviesAPI.festivals.single('Cinema Festival').get(eventYear)
+        return moviesAPI.festivals.single('/Cinema Festival').get(eventYear)
             .then((resp) => {
                 expect(resp.data.year).toBe(eventYear);
             })
+    });
+
+    test('subpath.get', () => {
+        return moviesAPI.documents.posters("path/to/poster/name.png").get()
+            .then((resp) => {
+                expect(typeof resp.data.size).toBe("number");
+            })
+    });
+
+    test('subpath with wrong path', () => {
+        const getIncorrectNestedClient = () => moviesAPI.documents.posters("path/to/poster/name.pdf");
+
+        expect(getIncorrectNestedClient).toThrowError();
     });
 });
 

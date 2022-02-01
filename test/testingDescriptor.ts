@@ -1,4 +1,4 @@
-import {deleteMapping, getAllMapping, getMapping, postMapping, putMapping, sub} from "../node-build/ts-rest-node.js";
+import {deleteMapping, getAllMapping, getMapping, postMapping, putMapping, sub, subPath} from "../node-build";
 
 type Genre = { id: number, name: string };
 type Movie = { id: number, name: string, genres: number[] };
@@ -41,6 +41,11 @@ export const moviesAPI = {
                 get: getMapping<undefined, Response<Nomination>>()
             },
             get: getMapping<undefined, Response<Event>>()
+        }))
+    },
+    documents: {
+        posters: subPath(/\.png$/, () => ({
+            get: getMapping<{}, Response<{size: number}>>()
         }))
     }
 };

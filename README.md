@@ -189,6 +189,24 @@ actor1.awards.post(/* award data */)
     .then(award => /*...*/);
 ```
 
+### Sub-paths
+For cases in which it is needed to declare a mapping for a varying sub-path,
+there's a `subPath` function:
+
+```typescript
+    const client = {
+        pdfDocument: subPath(/\.pdf$/, () => ({
+            get: getMapping<{}, Document>()
+        }))
+    }
+
+    client.pdfDocument("path/to/document/name.pdf").get() // [GET] <api_path>/path/to/document/name.pdf
+        .then(document => {/*...*/})
+```
+
+The first argument of `subPath` is a regular expression which you can use to restrict sub-path.
+If provided path doesn't match to the pattern, method will throw an error.
+
 ### Request modifiers
 Request modifiers are used to modify request parameters and response data during a request.
 
