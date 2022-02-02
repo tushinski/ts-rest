@@ -4,20 +4,7 @@ import {deleteMapping, getAllMapping, getMapping, postMapping, putMapping} from 
 
 type Pojo = {[key: string]: any};
 
-export type RestClient = { [key: string]: Pojo } & {
-    get?: RestClientMethod,
-    getAll?: RestClientMethod,
-    post?: RestClientMethod,
-    put?: RestClientMethod,
-    delete?: RestClientMethod,
-    single?: (id: string) => object
-};
-
-export type RestClientMethod = ReturnType<typeof getMapping> |
-    ReturnType<typeof getAllMapping> |
-    ReturnType<typeof postMapping> |
-    ReturnType<typeof putMapping> |
-    ReturnType<typeof deleteMapping>;
+export type RestClient = { [key: string]: Pojo };
 
 export type RestClientOptions = {
     url: string,
