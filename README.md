@@ -111,9 +111,13 @@ Mapping:
     put: putMapping<DataType, ResponseType>()
 }
 ```
-Usage:
+Usage (with resource id):
 ```typescript
-client.put(id: string, body: DataType)
+client.put(id: string, body: DataType) // [PUT] <api_url>/:id
+```
+Usage (on a current resource):
+```typescript
+client.resource.put(body: DataType) // [PUT] <api_url>/resource
 ```
 
 #### DELETE
