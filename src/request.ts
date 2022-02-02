@@ -37,7 +37,7 @@ export function request({mappingOptions, body, params, id}: RequestOptions) {
     }
 
     if (params) {
-        url = urlJoin(url, '?', encodeUrlParams(params))
+        url = urlJoin(url, `?${encodeUrlParams(params)}`)
     }
 
     if (body !== undefined) {
