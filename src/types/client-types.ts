@@ -1,5 +1,6 @@
 import {ModifiersMap} from "./modifiers-types";
 import {HTTPMethod} from "./request-types";
+import {deleteMapping, getAllMapping, getMapping, postMapping, putMapping} from "../ts-rest";
 
 type Pojo = {[key: string]: any};
 
@@ -12,7 +13,11 @@ export type RestClient = { [key: string]: Pojo } & {
     single?: (id: string) => object
 };
 
-export type RestClientMethod = (...data: any[]) => Promise<any>;
+export type RestClientMethod = ReturnType<typeof getMapping> |
+    ReturnType<typeof getAllMapping> |
+    ReturnType<typeof postMapping> |
+    ReturnType<typeof putMapping> |
+    ReturnType<typeof deleteMapping>;
 
 export type RestClientOptions = {
     url: string,
