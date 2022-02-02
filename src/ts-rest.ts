@@ -83,13 +83,20 @@ function postMapping<DataType, ResponseType>() {
 
 
 function putMapping<DataType, ResponseType>() {
-    const mapping = function(id: string, body: DataType): Promise<ResponseType> {
-        return request({mappingOptions: mappingToOptions.get(mapping), id, body})
+    const mapping = function(...args: [DataType] | [string, DataType]): Promise<ResponseType> {
+        if (args.length === 1) {
+            const [body] = args;
+
+            return request({mappingOptions: mappingToOptions.get(mapping), body});
+        } else if (args.length === 2) {
+            const [id, body] = args;
+
+            return request({mappingOptions: mappingToOptions.get(mapping), id, body});
+        }
     };
     mappingToOptions.set(mapping, {method: 'PUT'});
     return mapping;
 }
-
 
 function deleteMapping<ResponseType>() {
     const mapping = function(id: string): Promise<ResponseType> {

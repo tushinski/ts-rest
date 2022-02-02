@@ -40,6 +40,8 @@ describe('Requests', () => {
             })
     });
 
+    // TODO: add test for PUT without id
+
     test('post', () => {
         const newMovieName = 'Some name';
         const newMovieData = { id: 13, name: newMovieName, genres: [0, 1, 2] };
